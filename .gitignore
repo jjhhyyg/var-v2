@@ -1,0 +1,47 @@
+# ==================== 主仓库 Git 配置 ====================
+
+# 环境变量文件（包含敏感信息）
+.env
+
+# 存储目录（运行时生成的文件）
+storage/videos/
+storage/result_videos/
+storage/preprocessed_videos/
+storage/temp/
+storage/postgres-data/
+storage/redis-data/
+storage/rabbitmq-data/
+
+# 操作系统文件
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# IDE 和编辑器配置
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.project
+.classpath
+.settings/
+
+# 日志文件
+*.log
+logs/
+
+# 临时文件
+*.tmp
+*.bak
+*.cache
+
+# Claude AI 对话缓存
+.claude/
+
+# ==================== 子模块会有自己的 .gitignore ====================
+# backend/, frontend/, ai-processor/ 的忽略规则在各自目录中定义

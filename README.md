@@ -50,10 +50,10 @@ codes/
 
 ```bash
 # 克隆主仓库并初始化所有子模块
-git clone --recurse-submodules <repository-url>
+git clone --recurse-submodules https://github.com/jjhhyyg/var-v2.git
 
 # 或者先克隆主仓库，再初始化子模块
-git clone <repository-url>
+git clone https://github.com/jjhhyyg/var-v2.git
 cd codes
 git submodule update --init --recursive
 ```
@@ -305,4 +305,4 @@ tail -f logs/app.log
 
 ---
 
-**最后更新**: 2025-10-08
+**最后更新**: 2025-10-09

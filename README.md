@@ -17,7 +17,7 @@
 
 ## 🏗️ 项目结构
 
-```
+```text
 codes/
 ├── backend/              # Spring Boot 后端服务（Git Submodule）
 ├── frontend/             # Nuxt 前端应用（Git Submodule）
@@ -203,7 +203,7 @@ git push
 
 ### 消息流程
 
-```
+```text
 用户上传视频
     ↓
 Frontend → Backend
@@ -234,23 +234,13 @@ Frontend 轮询获取结果
 
 ---
 
-## 📚 相关文档
-
-- [系统设计文档](./系统设计文档.md) - 系统架构和设计说明
-- [接口设计文档](./接口设计文档.md) - API 接口详细说明
-- [配置迁移指南](./CONFIG_MIGRATION.md) - 配置整合过程说明
-- [RabbitMQ 队列说明](./RABBITMQ_QUEUES.md) - 消息队列架构
-- [存储路径配置](./STORAGE_PATH_GUIDE.md) - 存储路径配置说明
-
----
-
 ## 🛠️ 开发指南
 
 ### 代码提交规范
 
 使用 [Conventional Commits](https://www.conventionalcommits.org/) 规范：
 
-```
+```text
 feat: 新功能
 fix: 修复 Bug
 refactor: 重构代码

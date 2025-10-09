@@ -24,6 +24,7 @@ STORAGE_TEMP_SUBDIR=temp
 ### 1. Backend (Spring Boot)
 
 #### application.yaml 配置
+
 ```yaml
 app:
   storage:
@@ -35,7 +36,9 @@ app:
 ```
 
 #### Java 代码使用
+
 **AnalysisTaskServiceImpl.java**:
+
 ```java
 @Value("${app.storage.base-path}")
 private String storageBasePath;  // "storage"
@@ -54,6 +57,7 @@ String relativePath = storageBasePath + "/" + videosSubdir + "/" + filename;
 ```
 
 **VideoServiceImpl.java**:
+
 ```java
 // 从数据库读取相对路径
 String path = task.getVideoPath();  // "storage/videos/xxx.mp4"
@@ -65,9 +69,10 @@ return "../" + path;  // "../storage/videos/xxx.mp4"
 ```
 
 **使用说明**:
+
 - ✅ 视频上传：使用 `videos-subdir` (已实现)
 - ✅ 视频读取：从数据库读取路径 (已实现)
-- ⚠️ **未使用**: `result-videos-subdir`, `preprocessed-videos-subdir`, `temp-subdir` 
+- ⚠️ **未使用**: `result-videos-subdir`, `preprocessed-videos-subdir`, `temp-subdir`
   - Backend只需要读取这些路径（由AI模块写入）
   - 不需要在Java代码中配置，因为AI模块会通过回调设置完整路径
 
@@ -76,6 +81,7 @@ return "../" + path;  // "../storage/videos/xxx.mp4"
 ### 2. AI Processor (Python)
 
 #### config.py 配置
+
 ```python
 # 存储路径配置（相对于 codes/ 目录）
 STORAGE_BASE_PATH = os.getenv('STORAGE_BASE_PATH', 'storage')
@@ -89,6 +95,7 @@ PREPROCESSED_VIDEO_PATH = os.getenv('PREPROCESSED_VIDEO_PATH', './storage/prepro
 ```
 
 #### 使用方法
+
 ```python
 # 推荐方式：使用新的配置
 result_dir = Config.get_storage_path(Config.STORAGE_RESULT_VIDEOS_SUBDIR)
@@ -104,6 +111,7 @@ preprocessed_dir = Config.resolve_path(Config.PREPROCESSED_VIDEO_PATH)
 **实际使用位置**:
 
 **video_processor.py** (预处理视频):
+
 ```python
 # 当前使用（兼容方式）
 preprocessed_dir = Path(Config.resolve_path(Config.PREPROCESSED_VIDEO_PATH))
@@ -114,6 +122,7 @@ preprocessed_dir = Path(Config.get_storage_path(Config.STORAGE_PREPROCESSED_VIDE
 ```
 
 **video_processor.py** (结果视频):
+
 ```python
 # 当前使用
 result_dir = Config.resolve_path(Config.RESULT_VIDEO_PATH)
@@ -183,6 +192,7 @@ result_video_path = os.path.join(result_dir, f"{task_id}_{video_stem}_result.mp4
 ## ✅ 配置完整性检查清单
 
 ### Backend (application.yaml)
+
 - [x] `app.storage.base-path`
 - [x] `app.storage.videos-subdir`
 - [x] `app.storage.result-videos-subdir`
@@ -190,10 +200,12 @@ result_video_path = os.path.join(result_dir, f"{task_id}_{video_stem}_result.mp4
 - [x] `app.storage.temp-subdir`
 
 ### Backend (Java代码)
+
 - [x] **AnalysisTaskServiceImpl**: 使用 `base-path` + `videos-subdir`
 - [x] **VideoServiceImpl**: 从数据库读取路径（无需额外配置）
 
 ### AI Processor (config.py)
+
 - [x] `STORAGE_BASE_PATH`
 - [x] `STORAGE_VIDEOS_SUBDIR`
 - [x] `STORAGE_RESULT_VIDEOS_SUBDIR`
@@ -201,6 +213,7 @@ result_video_path = os.path.join(result_dir, f"{task_id}_{video_stem}_result.mp4
 - [x] `get_storage_path()` 方法
 
 ### AI Processor (实际使用)
+
 - [ ] **TODO**: 将 `video_processor.py` 中的旧方法改为使用 `get_storage_path()`
 - [x] **当前**: 使用兼容方式 `Config.PREPROCESSED_VIDEO_PATH`
 
@@ -211,16 +224,19 @@ result_video_path = os.path.join(result_dir, f"{task_id}_{video_stem}_result.mp4
 ### 优化1: 统一AI模块的路径获取方式
 
 **当前代码** (video_processor.py):
+
 ```python
 preprocessed_dir = Path(Config.resolve_path(Config.PREPROCESSED_VIDEO_PATH))
 ```
 
 **建议改为**:
+
 ```python
 preprocessed_dir = Path(Config.get_storage_path(Config.STORAGE_PREPROCESSED_VIDEOS_SUBDIR))
 ```
 
 **优点**:
+
 - 统一配置方式
 - 减少配置项重复
 - 更清晰的配置结构
@@ -268,6 +284,7 @@ Backend **只需要读取**这些路径，而路径已经由AI模块通过回调
 ### 配置使用正确吗？ ✅ 是的
 
 当前的配置设计是合理的：
+
 - Backend: 负责视频上传，需要 `videos-subdir`
 - AI模块: 负责视频处理，需要所有子目录配置
 - 路径通过数据库传递，无需重复配置

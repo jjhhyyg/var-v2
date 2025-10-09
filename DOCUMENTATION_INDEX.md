@@ -78,25 +78,30 @@
 ### 按用户角色
 
 #### 新成员入门
+
 1. ✅ README.md - 了解项目概况
 2. ✅ GIT_SUBMODULE_GUIDE.md - 学习如何克隆和开发
 3. ✅ .env.example - 配置开发环境
 4. ✅ 系统设计文档.md - 理解系统架构
 
 #### 后端开发者
+
 - ✅ backend/HELP.md - Spring Boot 开发
 - ✅ 接口设计文档.md - API 接口规范
 - ✅ RABBITMQ_QUEUES.md - 消息队列使用
 
 #### 前端开发者
+
 - ✅ frontend/README.md - Nuxt 开发
 - ✅ 接口设计文档.md - API 对接
 
 #### AI 模块开发者
+
 - ✅ ai-processor/README.md - AI 模块说明
 - ✅ STORAGE_PATH_GUIDE.md - 存储路径配置
 
 #### 运维人员
+
 - ✅ docker-compose.dev.yml - 基础设施配置
 - ✅ deploy.sh - 部署流程
 - ✅ CONFIG_UPDATE.md - 配置变更记录
@@ -104,10 +109,12 @@
 ### 按主题分类
 
 #### Git 相关
+
 - 📘 GIT_SUBMODULE_GUIDE.md
 - 📘 REPOSITORY_SETUP_COMPLETE.md
 
 #### 配置相关
+
 - ⚙️ .env.example
 - ⚙️ CODE_REVIEW_CONFIG.md
 - ⚙️ CONFIG_MIGRATION.md
@@ -115,6 +122,7 @@
 - ⚙️ STORAGE_PATH_GUIDE.md
 
 #### 架构相关
+
 - 🏗️ 系统设计文档.md
 - 🏗️ 接口设计文档.md
 - 🏗️ RABBITMQ_QUEUES.md
@@ -134,7 +142,7 @@
 
 ## 🔍 快速查找
 
-### 我想要...
+### 我想要
 
 - **开始开发** → [README.md](./README.md) + [GIT_SUBMODULE_GUIDE.md](./GIT_SUBMODULE_GUIDE.md)
 - **了解 API** → [接口设计文档.md](./接口设计文档.md)
@@ -151,16 +159,19 @@
 ### 文档优先级
 
 **必读文档** ⭐⭐⭐:
+
 - README.md
 - GIT_SUBMODULE_GUIDE.md
 - .env.example
 
 **推荐阅读** ⭐⭐:
+
 - 系统设计文档.md
 - 接口设计文档.md
 - REPOSITORY_SETUP_COMPLETE.md
 
 **按需查阅** ⭐:
+
 - 其他配置和专题文档
 
 ### 文档维护

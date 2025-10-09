@@ -32,6 +32,7 @@ codes/ (主仓库)
 主仓库包含以下内容：
 
 #### 配置文件
+
 - ✅ `.gitignore` - Git 忽略规则
 - ✅ `.gitmodules` - 子模块配置
 - ✅ `.env.example` - 环境变量模板
@@ -39,6 +40,7 @@ codes/ (主仓库)
 - ✅ `deploy.sh` - 部署脚本
 
 #### 文档文件
+
 - ✅ `README.md` - 项目主文档（包含快速开始指南）
 - ✅ `GIT_SUBMODULE_GUIDE.md` - Git Submodule 详细使用指南
 - ✅ `系统设计文档.md` - 系统架构设计

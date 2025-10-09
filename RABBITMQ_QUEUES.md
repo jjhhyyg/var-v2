@@ -29,6 +29,7 @@ AI模块通过HTTP回调返回结果
 ### 配置位置
 
 **Backend (application.yaml)**:
+
 ```yaml
 app:
   queue:
@@ -36,6 +37,7 @@ app:
 ```
 
 **AI模块 (.env)**:
+
 ```bash
 RABBITMQ_VIDEO_ANALYSIS_QUEUE=video_analysis_queue
 ```
@@ -43,6 +45,7 @@ RABBITMQ_VIDEO_ANALYSIS_QUEUE=video_analysis_queue
 ### 代码实现
 
 **Backend - 生产者 (VideoAnalysisProducer.java)**:
+
 ```java
 @Value("${app.queue.video-analysis}")
 private String videoAnalysisQueue;
@@ -53,6 +56,7 @@ public void sendAnalysisTask(VideoAnalysisMessage message) {
 ```
 
 **AI模块 - 消费者 (mq_consumer.py)**:
+
 ```python
 RABBITMQ_VIDEO_ANALYSIS_QUEUE = Config.RABBITMQ_VIDEO_ANALYSIS_QUEUE
 
@@ -112,6 +116,7 @@ requests.post(result_url, json={
 | 当前选择 | ✅ 采用 | ❌ 未采用 |
 
 **选择原因**：
+
 - ✅ 实现简单，易于调试
 - ✅ 实时性好，立即返回结果
 - ✅ 满足当前业务需求
@@ -138,6 +143,7 @@ RABBITMQ_VIDEO_ANALYSIS_QUEUE=video_analysis_queue
 ### 配置说明
 
 **Backend (application.yaml)**:
+
 ```yaml
 app:
   queue:
@@ -145,6 +151,7 @@ app:
 ```
 
 **AI模块 (config.py)**:
+
 ```python
 # 从根目录的 .env 加载配置
 RABBITMQ_VIDEO_ANALYSIS_QUEUE = os.getenv(
@@ -160,6 +167,7 @@ RABBITMQ_VIDEO_ANALYSIS_QUEUE = os.getenv(
 ### 当前系统架构
 
 **消息流程**:
+
 ```
 Frontend → Backend → RabbitMQ → AI模块
                     (video_analysis_queue)
@@ -169,6 +177,7 @@ AI模块 → Backend (HTTP回调)
 ```
 
 **架构特点**:
+
 - ✅ **简洁清晰** - 单一队列，职责明确
 - ✅ **易于维护** - 减少配置复杂度
 - ✅ **实时性好** - HTTP回调即时返回结果
@@ -185,7 +194,8 @@ AI模块 → Backend (HTTP回调)
 ---
 
 **文档创建时间**: 2025-10-08  
-**相关文档**: 
+**相关文档**:
+
 - [配置迁移指南](./CONFIG_MIGRATION.md)
 - [存储路径配置](./STORAGE_PATH_GUIDE.md)
 - [配置更新说明](./CONFIG_UPDATE.md)

@@ -176,6 +176,7 @@ git submodule foreach git push
 **原因**: 克隆主仓库时没有初始化子模块
 
 **解决**:
+
 ```bash
 git submodule update --init --recursive
 ```
@@ -185,6 +186,7 @@ git submodule update --init --recursive
 **原因**: 子模块处于分离头指针状态或本地提交与主仓库记录不一致
 
 **解决**:
+
 ```bash
 cd backend
 git checkout main
@@ -199,6 +201,7 @@ git commit -m "chore: 同步 backend 子模块"
 **原因**: 子模块处于分离头指针状态
 
 **解决**:
+
 ```bash
 cd backend
 git checkout main
@@ -211,6 +214,7 @@ git push origin main
 **原因**: `.gitmodules` 中的 URL 需要更新
 
 **解决**:
+
 ```bash
 # 编辑 .gitmodules 文件，更新 URL
 git submodule sync

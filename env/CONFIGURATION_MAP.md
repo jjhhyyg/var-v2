@@ -59,7 +59,6 @@
 | `AI_PROCESSOR_DEBUG` | 是否开启调试模式 | `config.py` |
 | `BACKEND_BASE_URL` | 后端服务URL(用于回调) | `config.py` |
 | `YOLO_MODEL_PATH` | YOLO模型文件路径 | `config.py` |
-| `YOLO_MODEL_VERSION` | YOLO模型版本 | `config.py` |
 | `YOLO_DEVICE` | 计算设备(cpu/cuda/mps) | `config.py` |
 | `YOLO_VERBOSE` | 是否显示详细输出 | `config.py` |
 | `TRACKER_CONFIG` | 追踪器配置文件 | `config.py` |
@@ -86,6 +85,6 @@
    - 开发环境: 使用 `localhost` 和相对路径
    - 生产环境: 使用实际的主机名/域名和绝对路径
 
-3. **配置文件合并**: 
+3. **配置文件合并**:
    - 各模块的 `.env` 文件会合并 `shared` 和模块独有的配置
    - `use-env.sh` 脚本会自动处理这个合并过程

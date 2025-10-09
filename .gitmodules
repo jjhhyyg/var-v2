@@ -1,12 +1,12 @@
 [submodule "backend"]
 	path = backend
-	url = ./backend
+	url = https://github.com/jjhhyyg/var-v2-backend.git
 	branch = main
 [submodule "frontend"]
 	path = frontend
-	url = ./frontend
+	url = https://github.com/jjhhyyg/var-v2-frontend.git
 	branch = main
 [submodule "ai-processor"]
 	path = ai-processor
-	url = ./ai-processor
+	url = https://github.com/jjhhyyg/var-v2-ai-processor.git
 	branch = main

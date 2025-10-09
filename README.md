@@ -4,14 +4,80 @@
 
 ## 📋 项目概述
 
-本项目是一个完整的视频分析平台，用于检测和分析 VAR（真空自耗电弧重熔）熔池视频中的异常事件，包括电极粘连、辉光现象等。
+本项目是一个完整的视频分析平台，用于检测和分析 VAR（真空自耗电弧重熔）熔池视频中的异常事件，包括电极粘连3. 使用脚本切换环境（会自动复制配置到各模块）：
+
+   ```bash
+   ./scripts/use-env.sh dev
+   ```
+
+> 💡 **提示**:。
 
 ### 技术栈
 
 - **前端**: Nuxt 4 + Vue 3 + TypeScript
-- **后端**: Spring Boot 3.5 + PostgreSQL + Redis
-- **AI模块**: Flask + PyTorch + YOLO11 + BoT-SORT
-- **基础设施**: Docker + RabbitMQ
+- **后端**: Spring Boo**RabbitMQ 配置：**
+
+```env
+RABBITMQ_HOST=localhost
+RABBITMQ_PORT=5672
+RABBITMQ_USER=var_user
+RABBITMQ_PASSWORD=var_password
+RABBITMQ_VHOST=/
+```
+
+**文件存储配置：**
+
+```env
+STORAGE_BASE_PATH=./storage
+STORAGE_VIDEOS_SUBDIR=videos
+STORAGE_RESULT_VIDEOS_SUBDIR=result_videos
+STORAGE_PREPROCESSED_VIDEOS_SUBDIR=preprocessed_videos
+STORAGE_TEMP_SUBDIR=temp
+```
+
+#### Backend 独有配置 (env/backend/)
+
+```env
+SERVER_PORT=8080
+BACKEND_BASE_URL=http://localhost:8080
+CORS_ORIGINS=http://localhost:3000
+LOG_LEVEL=DEBUG
+```
+
+#### Frontend 独有配置 (env/frontend/)
+
+```env
+NUXT_PUBLIC_API_BASE=http://localhost:8080
+```
+
+#### AI-Processor 独有配置 (env/ai-processor/)
+
+```env
+AI_PROCESSOR_PORT=5000
+YOLO_MODEL_PATH=weights/best.pt
+YOLO_MODEL_VERSION=yolo11m
+YOLO_DEVICE=mps
+TRACKER_CONFIG=botsort.yaml
+BACKEND_BASE_URL=http://localhost:8080
+```
+
+> 📝 **详细配置说明**: 查看 [`env/README.md`](env/README.md) 了解完整的配置文档。
+
+### 配置文件管理建议
+
+1. **版本控制**：
+   - ✅ 提交 `.env.example` 文件（作为模板）
+   - ✅ 提交 `.env.development` 文件（开发环境默认配置）
+   - ❌ 不要提交 `.env.production` 文件（包含敏感信息）
+   - ❌ 不要提交各模块的 `.env` 文件（运行时生成）
+
+2. **安全性**：
+   - 生产环境的敏感信息（密码、密钥）应使用环境变量或密钥管理服务
+   - 定期更新 JWT 密钥和数据库密码
+
+3. **环境一致性**：
+   - 使用 `use-env.sh` 脚本确保所有模块使用相同的环境配置
+   - 在团队中统一开发环境配置,减少"在我机器上能跑"的问题
 
 ---
 
@@ -22,14 +88,31 @@ codes/
 ├── backend/              # Spring Boot 后端服务（Git Submodule）
 ├── frontend/             # Nuxt 前端应用（Git Submodule）
 ├── ai-processor/         # AI 视频分析模块（Git Submodule）
+├── env/                  # 环境配置统一管理目录
+│   ├── shared/           # 共享配置（数据库、Redis、RabbitMQ）
+│   │   ├── .env.example
+│   │   ├── .env.development
+│   │   └── .env.production
+│   ├── backend/          # 后端配置
+│   │   ├── .env.example
+│   │   ├── .env.development
+│   │   └── .env.production
+│   ├── frontend/         # 前端配置
+│   │   ├── .env.example
+│   │   ├── .env.development
+│   │   └── .env.production
+│   └── ai-processor/     # AI 模块配置
+│       ├── .env.example
+│       ├── .env.development
+│       └── .env.production
+├── scripts/              # 工具脚本
+│   └── use-env.sh        # 环境切换脚本
 ├── storage/              # 存储目录（运行时生成）
 │   ├── videos/           # 原始视频
 │   ├── result_videos/    # 分析结果视频
 │   ├── preprocessed_videos/  # 预处理视频
 │   └── temp/             # 临时文件
-├── .env.example          # 环境变量模板
-├── docker-compose.dev.yml  # 开发环境基础设施配置
-└── deploy.sh             # 部署脚本
+└── docker-compose.dev.yml  # 开发环境基础设施配置
 ```
 
 ### Git Submodules
@@ -60,13 +143,43 @@ git submodule update --init --recursive
 
 ### 2. 环境准备
 
-#### 复制环境变量配置文件
+#### 配置环境变量
+
+本项目采用统一的环境配置管理，所有配置文件集中存放在 `env/` 目录下。
+
+**快速切换环境：**
 
 ```bash
-cp .env.example .env
+# 切换到开发环境
+./scripts/use-env.sh dev
+
+# 切换到生产环境
+./scripts/use-env.sh prod
 ```
 
-编辑 `.env` 文件，填入必要的配置信息。
+**首次使用时的配置步骤：**
+
+1. 查看配置模板文件：
+   - `env/shared/.env.example` - 共享配置（数据库、Redis、RabbitMQ）
+   - `env/backend/.env.example` - 后端配置
+   - `env/frontend/.env.example` - 前端配置
+   - `env/ai-processor/.env.example` - AI 模块配置
+
+2. 根据你的环境修改对应的配置文件：
+   - 开发环境：修改 `env/*/.env.development`
+   - 生产环境：修改 `env/*/.env.production`
+
+3. 使用脚本切换环境（会自动复制配置到各模块）：
+
+   ```bash
+   ./scripts/use-env.sh dev
+   ```
+
+> 💡 **提示**：
+>
+> - `.env.example` 文件仅作为模板参考
+> - `.env.development` 和 `.env.production` 包含实际配置
+> - 使用 `use-env.sh` 脚本会自动将配置复制到各模块的 `.env` 文件
 
 #### 启动基础设施服务
 
@@ -111,37 +224,106 @@ AI 模块默认运行在 `http://localhost:5000`
 
 ## ⚙️ 环境变量配置
 
-主要环境变量说明（详见 `.env.example`）：
+本项目采用集中式环境配置管理，所有配置文件统一存放在 `env/` 目录下。
 
-### 数据库配置
+### 环境配置结构
+
+```text
+env/
+├── shared/              # 共享配置（数据库、Redis、RabbitMQ）
+│   ├── .env.example
+│   ├── .env.development
+│   └── .env.production
+├── backend/             # Backend 独有配置
+│   ├── .env.example
+│   ├── .env.development
+│   └── .env.production
+├── frontend/            # Frontend 独有配置
+│   ├── .env.example
+│   ├── .env.development
+│   └── .env.production
+└── ai-processor/        # AI-Processor 独有配置
+    ├── .env.example
+    ├── .env.development
+    └── .env.production
+```
+
+### 快速切换环境
+
+使用 `use-env.sh` 脚本一键切换开发或生产环境：
+
+```bash
+# 切换到开发环境
+./scripts/use-env.sh dev
+
+# 切换到生产环境
+./scripts/use-env.sh prod
+```
+
+脚本会自动将 `env/` 目录下的配置文件复制到各个模块：
+
+- `env/backend/.env.{environment}` → `backend/.env`
+- `env/frontend/.env.{environment}` → `frontend/.env`
+- `env/ai-processor/.env.{environment}` → `ai-processor/.env`
+- `env/shared/.env.{environment}` → `.env.shared`
+
+### 主要配置说明
+
+#### 共享配置 (env/shared/)
+
+Backend 和 AI-Processor 共同使用的基础服务配置。
+
+**数据库配置：**
 
 ```env
 DB_HOST=localhost
 DB_PORT=5432
 DB_NAME=var_analysis
 DB_USER=var_user
-DB_PASSWORD=your_password
+DB_PASSWORD=var_password
 ```
 
-### Redis 配置
+**Redis 配置：**
 
 ```env
 REDIS_HOST=localhost
 REDIS_PORT=6379
-REDIS_PASSWORD=your_redis_password
+REDIS_PASSWORD=
 ```
 
-### RabbitMQ 配置
+**RabbitMQ 配置：**
 
 ```env
 RABBITMQ_HOST=localhost
 RABBITMQ_PORT=5672
-RABBITMQ_USER=var_user
-RABBITMQ_PASSWORD=your_rabbitmq_password
-RABBITMQ_VIDEO_ANALYSIS_QUEUE=video_analysis_queue
+RABBITMQ_USER=guest
+RABBITMQ_PASSWORD=guest
 ```
 
-### 存储路径配置
+#### 后端配置 (env/backend/)
+
+Spring Boot 应用配置，包括服务器端口、数据源、JWT 等。
+
+```env
+SERVER_PORT=8080
+SPRING_PROFILES_ACTIVE=dev
+SPRING_DATASOURCE_URL=jdbc:postgresql://localhost:5432/var_database
+JWT_SECRET=your_jwt_secret_key
+```
+
+#### 前端配置 (env/frontend/)
+
+Nuxt 应用配置，包括 API 地址、WebSocket 等。
+
+```env
+NUXT_PUBLIC_API_BASE_URL=http://localhost:8080/api
+NUXT_PUBLIC_WS_URL=ws://localhost:8080/ws
+NUXT_PUBLIC_ENV=development
+```
+
+#### AI 模块配置 (env/ai-processor/)
+
+AI 处理模块配置，包括模型路径、视频存储路径等。
 
 ```env
 STORAGE_BASE_PATH=storage

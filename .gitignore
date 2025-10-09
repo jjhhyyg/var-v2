@@ -2,6 +2,19 @@
 
 # 环境变量文件（包含敏感信息）
 .env
+.env.local
+.env.*.local
+.env.shared
+
+# 模块环境配置文件（实际使用的配置）
+backend/.env
+frontend/.env
+ai-processor/.env
+
+# 保留 env/ 目录中的模板文件
+# !env/**/.env.example
+# !env/**/.env.development
+# !env/**/.env.production
 
 # 存储目录（运行时生成的文件）
 storage/videos/

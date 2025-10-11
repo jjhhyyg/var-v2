@@ -24,6 +24,7 @@ storage/temp/
 storage/postgres-data/
 storage/redis-data/
 storage/rabbitmq-data/
+storage/tracking_results/
 
 # 操作系统文件
 .DS_Store

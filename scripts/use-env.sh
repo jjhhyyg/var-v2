@@ -21,12 +21,30 @@ echo "Switching to $ENV_FULL environment..."
 cp env/backend/.env.$ENV_FULL backend/.env
 cp env/frontend/.env.$ENV_FULL frontend/.env
 cp env/ai-processor/.env.$ENV_FULL ai-processor/.env
-cp env/shared/.env.$ENV_FULL .env.shared
+
+# 将 shared 配置追加到各模块的 .env 文件
+if [ -f env/shared/.env.$ENV_FULL ]; then
+    echo "" >> backend/.env
+    echo "# ===== Shared Configuration =====" >> backend/.env
+    cat env/shared/.env.$ENV_FULL >> backend/.env
+    
+    echo "" >> frontend/.env
+    echo "# ===== Shared Configuration =====" >> frontend/.env
+    cat env/shared/.env.$ENV_FULL >> frontend/.env
+    
+    echo "" >> ai-processor/.env
+    echo "# ===== Shared Configuration =====" >> ai-processor/.env
+    cat env/shared/.env.$ENV_FULL >> ai-processor/.env
+
+    echo "" >> .env
+    echo "# ===== Shared Configuration =====" >> .env
+    cat env/shared/.env.$ENV_FULL >> .env
+fi
 
 echo "✓ Environment switched to $ENV_FULL"
 echo ""
 echo "Loaded configurations:"
-echo "  - backend/.env"
-echo "  - frontend/.env"
-echo "  - ai-processor/.env"
-echo "  - .env.shared"
+echo "  - backend/.env (with shared config)"
+echo "  - frontend/.env (with shared config)"
+echo "  - ai-processor/.env (with shared config)"
+echo "  - .env (with shared config)"

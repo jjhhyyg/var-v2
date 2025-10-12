@@ -1,0 +1,191 @@
+# Docker Compose配置 - 生产环境
+# 用于生产环境部署，包含所有服务的容器化配置
+# 包括：PostgreSQL, Redis, RabbitMQ, Backend, Frontend, AI-Processor
+
+services:
+    # PostgreSQL数据库
+    postgres:
+        image: postgres:17.6-alpine
+        container_name: var-postgres-prod
+        restart: always
+        env_file:
+            - .env
+        environment:
+            POSTGRES_DB: ${DB_NAME}
+            POSTGRES_USER: ${DB_USER}
+            POSTGRES_PASSWORD: ${DB_PASSWORD}
+            PGDATA: /var/lib/postgresql/data/pgdata
+            LANG: en_US.utf8
+            LC_ALL: en_US.utf8
+        ports:
+            - "${DB_PORT}:5432"
+        volumes:
+            - ./storage/postgres-data:/var/lib/postgresql/data
+        healthcheck:
+            test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
+            interval: 10s
+            timeout: 5s
+            retries: 5
+        networks:
+            - var-network
+
+    # Redis缓存
+    redis:
+        image: redis:8.2.1-alpine
+        container_name: var-redis-prod
+        restart: always
+        env_file:
+            - .env
+        command: redis-server --requirepass ${REDIS_PASSWORD} --appendonly yes
+        ports:
+            - "${REDIS_PORT}:6379"
+        volumes:
+            - ./storage/redis-data:/data
+        healthcheck:
+            test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+            interval: 10s
+            timeout: 3s
+            retries: 5
+        networks:
+            - var-network
+
+    # RabbitMQ消息队列
+    rabbitmq:
+        image: rabbitmq:4.1.4-management-alpine
+        container_name: var-rabbitmq-prod
+        restart: always
+        env_file:
+            - .env
+        environment:
+            RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER}
+            RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD}
+            RABBITMQ_DEFAULT_VHOST: ${RABBITMQ_VHOST}
+        ports:
+            - "${RABBITMQ_PORT}:5672"
+            - "15672:15672"
+        volumes:
+            - ./storage/rabbitmq-data:/var/lib/rabbitmq
+        healthcheck:
+            test: ["CMD", "rabbitmq-diagnostics", "ping"]
+            interval: 10s
+            timeout: 5s
+            retries: 5
+        networks:
+            - var-network
+
+    # 后端服务
+    backend:
+        build:
+            context: ./backend
+            dockerfile: Dockerfile
+        image: var-backend:latest
+        container_name: var-backend-prod
+        restart: always
+        env_file:
+            - ./backend/.env
+        ports:
+            - "8080:8080"
+        volumes:
+            # 共享存储卷,用于存储上传的视频和处理结果
+            - ./storage:/var/var-analysis/storage
+        depends_on:
+            postgres:
+                condition: service_healthy
+            redis:
+                condition: service_healthy
+            rabbitmq:
+                condition: service_healthy
+        healthcheck:
+            test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
+            interval: 30s
+            timeout: 3s
+            start_period: 60s
+            retries: 3
+        networks:
+            - var-network
+
+    # AI处理模块
+    ai-processor:
+        build:
+            context: ./ai-processor
+            dockerfile: Dockerfile
+        image: var-ai-processor:latest
+        container_name: var-ai-processor-prod
+        restart: always
+        env_file:
+            - ./ai-processor/.env
+        ports:
+            - "5000:5000"
+        volumes:
+            # 共享存储卷,用于读取视频和写入处理结果
+            - ./storage:/var/var-analysis/storage
+            # 挂载模型权重文件（只读）
+            - ./ai-processor/weights:/app/weights:ro
+        depends_on:
+            postgres:
+                condition: service_healthy
+            redis:
+                condition: service_healthy
+            rabbitmq:
+                condition: service_healthy
+            backend:
+                condition: service_healthy
+        healthcheck:
+            test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
+            interval: 30s
+            timeout: 3s
+            start_period: 90s
+            retries: 3
+        networks:
+            - var-network
+        # 可选：如果有GPU，取消注释以下配置
+        # deploy:
+        #   resources:
+        #     reservations:
+        #       devices:
+        #         - driver: nvidia
+        #           count: 1
+        #           capabilities: [gpu]
+
+    # 前端服务
+    frontend:
+        build:
+            context: ./frontend
+            dockerfile: Dockerfile
+        image: var-frontend:latest
+        container_name: var-frontend-prod
+        restart: always
+        ports:
+            - "8848:8848"
+        depends_on:
+            backend:
+                condition: service_healthy
+        healthcheck:
+            test:
+                [
+                    "CMD",
+                    "wget",
+                    "--no-verbose",
+                    "--tries=1",
+                    "--spider",
+                    "http://localhost:8848/",
+                ]
+            interval: 30s
+            timeout: 3s
+            start_period: 15s
+            retries: 3
+        networks:
+            - var-network
+
+# 网络配置
+networks:
+    var-network:
+        name: var-network-prod
+        driver: bridge
+
+# 卷配置（可选，如果需要命名卷）
+volumes:
+    postgres-data:
+    redis-data:
+    rabbitmq-data:
+    storage:

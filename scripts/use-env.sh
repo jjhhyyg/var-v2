@@ -42,6 +42,10 @@ if [ -f env/shared/.env.$ENV_FULL ]; then
     echo "" >> ai-processor/.env
     echo "# ===== Shared Configuration =====" >> ai-processor/.env
     cat env/shared/.env.$ENV_FULL >> ai-processor/.env
+
+    echo "" >> .env
+    echo "# ===== Shared Configuration =====" >> .env
+    cat env/shared/.env.$ENV_FULL >> .env
 fi
 
 echo "Environment switched to $ENV_FULL"

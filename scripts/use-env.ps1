@@ -15,6 +15,13 @@ if ($Env -eq 'dev') {
 
 Write-Host "Switching to $EnvFull environment..." -ForegroundColor Cyan
 
+# 删除现有的环境变量文件
+Write-Host "Cleaning existing environment files..." -ForegroundColor Yellow
+Remove-Item "backend\.env" -Force -ErrorAction SilentlyContinue
+Remove-Item "frontend\.env" -Force -ErrorAction SilentlyContinue
+Remove-Item "ai-processor\.env" -Force -ErrorAction SilentlyContinue
+Remove-Item ".env" -Force -ErrorAction SilentlyContinue
+
 # 复制配置文件到各模块
 Copy-Item "env\backend\.env.$EnvFull" "backend\.env" -Force
 Copy-Item "env\frontend\.env.$EnvFull" "frontend\.env" -Force
@@ -43,7 +50,7 @@ if (Test-Path $sharedConfig) {
 }
 
 Write-Host ""
-Write-Host "✓ Environment switched to $EnvFull" -ForegroundColor Green
+Write-Host "Environment switched to $EnvFull" -ForegroundColor Green
 Write-Host ""
 Write-Host "Loaded configurations:"
 Write-Host "  - backend\.env (with shared config)"

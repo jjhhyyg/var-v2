@@ -22,6 +22,13 @@ if "%ENV%"=="dev" (
 
 echo Switching to %ENV_FULL% environment...
 
+REM 删除现有的环境变量文件
+echo Cleaning existing environment files...
+if exist backend\.env del /Q backend\.env
+if exist frontend\.env del /Q frontend\.env
+if exist ai-processor\.env del /Q ai-processor\.env
+if exist .env del /Q .env
+
 REM 复制配置文件到各模块
 copy /Y env\backend\.env.%ENV_FULL% backend\.env >nul
 copy /Y env\frontend\.env.%ENV_FULL% frontend\.env >nul
@@ -47,7 +54,7 @@ if exist env\shared\.env.%ENV_FULL% (
 )
 
 echo.
-echo √ Environment switched to %ENV_FULL%
+echo Environment switched to %ENV_FULL%
 echo.
 echo Loaded configurations:
 echo   - backend\.env (with shared config)

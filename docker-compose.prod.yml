@@ -139,13 +139,13 @@ services:
         networks:
             - var-network
         # 可选：如果有GPU，取消注释以下配置
-        # deploy:
-        #   resources:
-        #     reservations:
-        #       devices:
-        #         - driver: nvidia
-        #           count: 1
-        #           capabilities: [gpu]
+        deploy:
+          resources:
+            reservations:
+              devices:
+                - driver: nvidia
+                  count: 1
+                  capabilities: [gpu]
 
     # 前端服务
     frontend:

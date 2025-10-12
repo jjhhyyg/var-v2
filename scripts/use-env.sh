@@ -17,6 +17,13 @@ fi
 
 echo "Switching to $ENV_FULL environment..."
 
+# 删除现有的环境变量文件
+echo "Cleaning existing environment files..."
+rm -f backend/.env
+rm -f frontend/.env
+rm -f ai-processor/.env
+rm -f .env
+
 # 复制配置文件到各模块
 cp env/backend/.env.$ENV_FULL backend/.env
 cp env/frontend/.env.$ENV_FULL frontend/.env
@@ -35,13 +42,9 @@ if [ -f env/shared/.env.$ENV_FULL ]; then
     echo "" >> ai-processor/.env
     echo "# ===== Shared Configuration =====" >> ai-processor/.env
     cat env/shared/.env.$ENV_FULL >> ai-processor/.env
-
-    echo "" >> .env
-    echo "# ===== Shared Configuration =====" >> .env
-    cat env/shared/.env.$ENV_FULL >> .env
 fi
 
-echo "✓ Environment switched to $ENV_FULL"
+echo "Environment switched to $ENV_FULL"
 echo ""
 echo "Loaded configurations:"
 echo "  - backend/.env (with shared config)"

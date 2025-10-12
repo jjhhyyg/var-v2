@@ -1,47 +1,49 @@
-# VAR 熔池视频分析系统
+# VAR Molten Pool Video Analysis System
 
-> 基于深度学习的焊接熔池视频智能分析系统
+[简体中文](README.zh.md) | English
 
-## 📋 项目概述
+> Intelligent welding pool video analysis system based on deep learning
 
-本项目是一个完整的视频分析平台，用于检测和分析 VAR（真空自耗电弧重熔）熔池视频中的异常事件。
+## 📋 Project Overview
 
-### 技术架构
+This is a complete video analysis platform for detecting and analyzing anomalous events in VAR (Vacuum Arc Remelting) molten pool videos.
 
-- **前端**: Nuxt 4 + Vue 3 + TypeScript
-- **后端**: Spring Boot 3 + PostgreSQL + Redis
-- **AI 引擎**: Flask + PyTorch + YOLO11
-- **消息队列**: RabbitMQ
+### Tech Stack
 
-### 核心功能
+- **Frontend**: Nuxt 4 + Vue 3 + TypeScript
+- **Backend**: Spring Boot 3 + PostgreSQL + Redis
+- **AI Engine**: Flask + PyTorch + YOLO11
+- **Message Queue**: RabbitMQ
 
-- 视频上传与管理（支持最大 2GB）
-- 基于 RabbitMQ 的异步任务处理
-- YOLO11 目标检测 + BoT-SORT 跟踪
-- 自动检测电极粘连、辉光等异常事件
-- 生成标注后的结果视频
-- 实时进度追踪
+### Core Features
+
+- Video upload and management (supports up to 2GB)
+- Asynchronous task processing based on RabbitMQ
+- YOLO11 object detection + BoT-SORT tracking
+- Automatic detection of anomalous events like electrode adhesion and glow
+- Generate annotated result videos
+- Real-time progress tracking
 
 ---
 
-## 🚀 快速开始
+## 🚀 Quick Start
 
-### 1. 克隆仓库
+### 1. Clone the Repository
 
 ```bash
-# 克隆主仓库并初始化所有子模块
+# Clone the main repository and initialize all submodules
 git clone --recurse-submodules https://github.com/jjhhyyg/var-v2.git
 cd var-v2
 
-# 或者先克隆主仓库，再初始化子模块
+# Or clone the main repository first, then initialize submodules
 git clone https://github.com/jjhhyyg/var-v2.git
 cd var-v2
 git submodule update --init --recursive
 ```
 
-### 2. 开发环境快速启动
+### 2. Development Environment Quick Start
 
-#### 步骤 1: 配置环境变量
+#### Step 1: Configure Environment Variables
 
 ```bash
 # Linux/macOS
@@ -54,45 +56,45 @@ git submodule update --init --recursive
 scripts\use-env.cmd dev
 ```
 
-> 💡 首次使用请先根据 `env/*/.env.example` 修改 `env/*/.env.development` 中的配置
+> For first-time use, please modify the configuration in `env/*/.env.development` based on `env/*/.env.example`
 
-#### 步骤 2: 启动基础设施（PostgreSQL、Redis、RabbitMQ）
+#### Step 2: Start Infrastructure (PostgreSQL, Redis, RabbitMQ)
 
 ```bash
 docker-compose -f docker-compose.dev.yml up -d
 ```
 
-#### 步骤 3: 启动各服务
+#### Step 3: Start Services
 
-**后端服务**
+**Backend Service**
 
 ```bash
 cd backend
 ./mvnw spring-boot:run
-# 服务运行在 http://localhost:8080
+# Service runs at http://localhost:8080
 ```
 
-**前端应用**
+**Frontend Application**
 
 ```bash
 cd frontend
 pnpm install
 pnpm dev
-# 服务运行在 http://localhost:3000
+# Service runs at http://localhost:3000
 ```
 
-**AI 处理模块**
+**AI Processing Module**
 
 ```bash
 cd ai-processor
 pip install -r requirements.txt
 python app.py
-# 服务运行在 http://localhost:5000
+# Service runs at http://localhost:5000
 ```
 
-### 3. 生产环境部署（Docker）
+### 3. Production Deployment (Docker)
 
-#### 步骤 1: 配置生产环境变量
+#### Step 1: Configure Production Environment Variables
 
 ```bash
 # Linux/macOS
@@ -105,58 +107,59 @@ python app.py
 scripts\use-env.cmd prod
 ```
 
-> ⚠️ 生产环境请务必修改 `env/*/.env.production` 中的敏感信息（数据库密码、JWT 密钥等）
+> ⚠️ For production environment, be sure to modify sensitive information in `env/*/.env.production` (database passwords, JWT secrets, etc.)
 
-#### 步骤 2: 准备 AI 模型权重文件
+#### Step 2: Prepare AI Model Weight Files
 
-确保 YOLO 模型权重文件已放置在正确位置：
+Ensure YOLO model weight file is placed in the correct location:
 
 ```bash
-# 确保权重文件存在
+# Ensure weight file exists
 ls ai-processor/weights/best.pt
 ```
 
-#### 步骤 3: 使用 Docker Compose 一键部署
+#### Step 3: One-Click Deployment with Docker Compose
 
 ```bash
-# 构建并启动所有服务（包括 PostgreSQL、Redis、RabbitMQ、Backend、Frontend、AI-Processor）
+# Build and start all services (including PostgreSQL, Redis, RabbitMQ, Backend, Frontend, AI-Processor)
+# Use docker-compose.prod.cpu.yml if no GPU available
 docker-compose -f docker-compose.prod.yml up -d --build
 
-# 查看服务状态
+# View service status
 docker-compose -f docker-compose.prod.yml ps
 
-# 查看服务日志
+# View service logs
 docker-compose -f docker-compose.prod.yml logs -f
 
-# 停止所有服务
+# Stop all services
 docker-compose -f docker-compose.prod.yml down
 ```
 
-部署完成后，服务访问地址：
+After deployment, service access addresses:
 
-- 前端: <http://localhost:8848>
-- 后端 API: <http://localhost:8080>
-- AI 处理模块: <http://localhost:5000>
-- RabbitMQ 管理界面: <http://localhost:15672>
-
-> 💡 **GPU 支持**: 如果服务器有 NVIDIA GPU，可在 `docker-compose.prod.yml` 中取消注释 AI 模块的 GPU 配置部分
+- Frontend: http://localhost:8848
+- Backend API: http://localhost:8080
+- AI Processing Module: http://localhost:5000
+- RabbitMQ Management Interface: http://localhost:15672
 
 ---
 
-## 📚 更多文档
+## 📚 More Documentation
 
-- **详细配置说明**: 查看 [`env/README.md`](env/README.md)
-- **Git Submodule 管理**: 查看各子项目的 README
+- **Detailed Configuration Guide**: See [`env/README.md`](env/README.md)
+- **Git Submodule Management**: See README in each subproject
   - [backend/](backend/)
   - [frontend/](frontend/)
   - [ai-processor/](ai-processor/)
 
 ---
 
-## 📄 许可证
+## 📄 License
 
-[待定]
+This project is licensed under the GNU Affero General Public License v3.0 (AGPL-3.0) - see the [LICENSE](LICENSE) file for details.
+
+**Important:** Any modified version of this software used over a network must make the source code available to users.
 
 ---
 
-**最后更新**: 2025-10-12
+**Last Updated**: 2025-10-13

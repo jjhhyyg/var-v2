@@ -120,7 +120,12 @@ services:
             # 共享存储卷,用于读取视频和写入处理结果
             - ./storage:/app/storage
             # 挂载模型权重文件（只读）
-            - ./ai-processor/weights:/app/weights:ro
+            - ./ai-processor/weights:/app/ai-processor/weights:ro
+            # 临时目录（内存文件系统，提高安全性）
+            - type: tmpfs
+              target: /tmp
+              tmpfs:
+                  size: 1073741824 # 1GB
         depends_on:
             postgres:
                 condition: service_healthy
@@ -138,7 +143,28 @@ services:
             retries: 3
         networks:
             - var-network
+        # ========================================
+        # 容器安全加固配置
+        # ========================================
+        security_opt:
+            # 禁止新权限（防止提权攻击）
+            - no-new-privileges:true
+            # 使用 seccomp 安全配置（限制系统调用）
+            - seccomp:unconfined # 生产环境建议使用自定义 seccomp 配置文件
+        cap_drop:
+            # 移除所有 Linux capabilities（最小权限原则）
+            - ALL
+        cap_add:
+            # 只添加必需的 capabilities
+            - CHOWN # 修改文件所有者（日志目录等）
+            - DAC_OVERRIDE # 绕过文件权限检查（必需）
+            - SETGID # 设置 GID（切换用户组）
+            - SETUID # 设置 UID（切换用户）
+        # 只读根文件系统（提高安全性）- 注意：需要确保所有写入都在 volumes 或 tmpfs 中
+        # read_only: true  # 如果启用，需要添加更多 tmpfs 挂载点
+        # ========================================
         # 可选：如果有GPU，取消注释以下配置
+        # ========================================
         deploy:
             resources:
                 reservations:

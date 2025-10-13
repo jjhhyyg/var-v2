@@ -108,8 +108,8 @@ services:
     ai-processor:
         build:
             context: ./ai-processor
-            dockerfile: Dockerfile
-        image: var-ai-processor:latest
+            dockerfile: Dockerfile.cpu
+        image: var-ai-processor-cpu:latest
         container_name: var-ai-processor-prod
         restart: always
         env_file:

@@ -66,7 +66,7 @@ docker-compose -f docker-compose.dev.yml up -d
 
 #### Step 3: Start Services
 
-**Backend Service**
+##### Backend Service
 
 ```bash
 cd backend
@@ -74,16 +74,16 @@ cd backend
 # Service runs at http://localhost:8080
 ```
 
-**Frontend Application**
+##### Frontend Application
 
 ```bash
 cd frontend
-pnpm install
-pnpm dev
+npm install
+npm run dev
 # Service runs at http://localhost:3000
 ```
 
-**AI Processing Module**
+##### AI Processing Module
 
 ```bash
 cd ai-processor
@@ -137,10 +137,10 @@ docker-compose -f docker-compose.prod.yml down
 
 After deployment, service access addresses:
 
-- Frontend: http://localhost:8848
-- Backend API: http://localhost:8080
-- AI Processing Module: http://localhost:5000
-- RabbitMQ Management Interface: http://localhost:15672
+- Frontend: <http://localhost:8848>
+- Backend API: <http://localhost:8080>
+- AI Processing Module: <http://localhost:5000>
+- RabbitMQ Management Interface: <http://localhost:15672>
 
 ---
 

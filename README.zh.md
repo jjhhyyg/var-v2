@@ -66,7 +66,7 @@ docker-compose -f docker-compose.dev.yml up -d
 
 #### 步骤 3: 启动各服务
 
-**后端服务**
+##### 后端服务
 
 ```bash
 cd backend
@@ -74,16 +74,16 @@ cd backend
 # 服务运行在 http://localhost:8080
 ```
 
-**前端应用**
+##### 前端应用
 
 ```bash
 cd frontend
-pnpm install
-pnpm dev
+npm install
+npm run dev
 # 服务运行在 http://localhost:3000
 ```
 
-**AI 处理模块**
+##### AI 处理模块
 
 ```bash
 cd ai-processor

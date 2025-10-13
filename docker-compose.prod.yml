@@ -119,8 +119,6 @@ services:
         volumes:
             # 共享存储卷,用于读取视频和写入处理结果
             - ./storage:/app/storage
-            # 挂载模型权重文件（只读）
-            - ./ai-processor/weights:/app/ai-processor/weights:ro
             # 临时目录（内存文件系统，提高安全性）
             - type: tmpfs
               target: /tmp
@@ -178,6 +176,8 @@ services:
         build:
             context: ./frontend
             dockerfile: Dockerfile
+            args:
+                NUXT_PUBLIC_API_BASE: ""
         image: var-frontend:latest
         container_name: var-frontend-prod
         restart: always

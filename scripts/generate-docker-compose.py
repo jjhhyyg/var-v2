@@ -6,8 +6,10 @@
 此脚本会:
 1. 读取对应环境的所有环境变量文件（backend、frontend、ai-processor、shared）
 2. 读取对应的 docker-compose 模板文件（docker-compose.dev.yml 或 docker-compose.prod.yml）
-3. 替换所有的 ${VARIABLE} 为实际的环境变量值
-4. 生成独立的 docker-compose.yml 文件，不再依赖任何 .env 文件
+3. 保留模板中的占位符（${VARIABLE}）
+4. 为每个自定义服务添加其特定的环境变量（从对应的.env.production文件）
+5. 为所有服务添加共享环境变量（从shared/.env.production文件）
+6. 生成独立的 docker-compose.yml 文件
 """
 
 import os
@@ -53,7 +55,7 @@ def load_all_env_vars(env_mode):
     """
     加载所有相关的环境变量文件
     env_mode: 'dev' 或 'prod'
-    返回: (合并后的环境变量字典, 共享环境变量字典)
+    返回: 包含各模块环境变量的字典 {'shared': {...}, 'backend': {...}, 'frontend': {...}, 'ai-processor': {...}}
     """
     env_full = 'development' if env_mode == 'dev' else 'production'
 
@@ -67,31 +69,29 @@ def load_all_env_vars(env_mode):
         'ai-processor': f'env/ai-processor/.env.{env_full}',
     }
 
-    # 按顺序加载环境变量（后加载的会覆盖先加载的）
-    all_env_vars = {}
-    shared_vars = {}
+    # 分别加载各模块的环境变量
+    env_vars_by_module = {}
 
-    # 先加载 shared（基础配置）
-    if os.path.exists(env_files['shared']):
-        shared_vars = load_env_file(env_files['shared'])
-        all_env_vars.update(shared_vars)
-        print(f"  ✓ 已加载 {env_files['shared']} ({len(shared_vars)} 个变量)")
+    for module, filepath in env_files.items():
+        if os.path.exists(filepath):
+            module_vars = load_env_file(filepath)
+            env_vars_by_module[module] = module_vars
+            print(f"  ✓ 已加载 {filepath} ({len(module_vars)} 个变量)")
+        else:
+            env_vars_by_module[module] = {}
+            print(f"  ⚠ 文件不存在: {filepath}")
 
-    # 然后加载各模块的配置（模块配置可以覆盖 shared 配置）
-    for module in ['backend', 'frontend', 'ai-processor']:
-        if os.path.exists(env_files[module]):
-            module_vars = load_env_file(env_files[module])
-            all_env_vars.update(module_vars)
-            print(f"  ✓ 已加载 {env_files[module]} ({len(module_vars)} 个变量)")
-
-    print(f"\n共加载了 {len(all_env_vars)} 个环境变量 (其中共享变量 {len(shared_vars)} 个)")
-    return all_env_vars, shared_vars
+    total_vars = sum(len(vars) for vars in env_vars_by_module.values())
+    print(f"\n共加载了 {total_vars} 个环境变量")
+    return env_vars_by_module
 
 
 def replace_env_vars(content, env_vars):
     """
     替换字符串中的所有 ${VARIABLE} 为实际的环境变量值
     支持 ${VAR} 和 $VAR 两种格式
+
+    注意：在新的逻辑中，我们不再使用这个函数，保留占位符
     """
     # 替换 ${VAR} 格式
     def replace_match(match):
@@ -136,51 +136,124 @@ def remove_env_file_references(content):
     return '\n'.join(result_lines)
 
 
-def inject_shared_env_vars(content, shared_vars, services_to_inject=None):
+def inject_environment_variables(content, env_vars_by_module):
     """
-    为指定的服务注入共享环境变量
-    为每个服务添加environment配置块，包含所有共享环境变量
+    为服务注入环境变量
+    - 为所有服务注入共享环境变量
+    - 为自定义服务（backend, frontend, ai-processor）额外注入其特定的环境变量
+    - 如果服务已有 environment 块，在其最后追加新的环境变量；否则在 restart 后创建新的
 
     Args:
         content: docker-compose文件内容
-        shared_vars: 共享环境变量字典
-        services_to_inject: 需要注入的服务列表，None表示所有服务
+        env_vars_by_module: 按模块分组的环境变量字典 {'shared': {...}, 'backend': {...}, ...}
 
     Returns:
-        添加了共享环境变量的docker-compose内容
+        添加了环境变量的docker-compose内容
     """
-    if not shared_vars:
-        print("  警告: 没有共享环境变量需要注入")
-        return content
+    # 定义服务及其对应的环境变量模块
+    # 格式：service_name -> [module_name1, module_name2, ...]
+    service_env_mapping = {
+        'postgres': ['shared'],
+        'redis': ['shared'],
+        'rabbitmq': ['shared'],
+        'backend': ['shared', 'backend'],
+        'frontend': ['shared', 'frontend'],
+        'ai-processor': ['shared', 'ai-processor'],
+    }
 
-    if not services_to_inject:
-        print("  警告: 没有指定需要注入的服务")
-        return content
+    # 第一次扫描：检测每个服务是否有 environment 块
+    lines = content.split('\n')
+    service_has_env = {}
+    current_service = None
 
-    # 构建environment配置块（缩进8个空格）
-    env_block_lines = ['        environment:']
-    for key, value in sorted(shared_vars.items()):
-        env_block_lines.append(f'            {key}: {value}')
-    env_block = '\n'.join(env_block_lines)
+    for line in lines:
+        service_match = re.match(r'^    ([a-z-]+):\s*$', line)
+        if service_match:
+            current_service = service_match.group(1)
+            service_has_env[current_service] = False
+        elif current_service and re.match(r'^\s{8}environment:\s*$', line):
+            service_has_env[current_service] = True
 
-    # 为每个服务注入environment配置
-    for service_name in services_to_inject:
-        # 使用正则表达式找到服务定义，并在restart行之后插入environment配置
-        # 匹配模式：服务名 -> ... -> restart: ... -> 插入environment
+    # 第二次扫描：注入环境变量
+    result_lines = []
+    i = 0
+    current_service = None
+    in_environment_block = False
+    service_processed = {}  # 跟踪每个服务是否已经处理过
 
-        # 构造服务匹配模式
-        # 匹配 "    service_name:" 开头，然后查找 "restart:" 行
-        service_pattern = rf'(^    {re.escape(service_name)}:.*?^\s+restart:\s+\S+)\n'
+    while i < len(lines):
+        line = lines[i]
 
-        # 在restart之后插入environment配置
-        replacement = rf'\1\n{env_block}\n'
+        # 检查是否是服务定义行（例如 "    postgres:"）
+        service_match = re.match(r'^    ([a-z-]+):\s*$', line)
+        if service_match:
+            current_service = service_match.group(1)
+            in_environment_block = False
+            result_lines.append(line)
+            i += 1
+            continue
 
-        # 使用MULTILINE和DOTALL标志进行匹配
-        content = re.sub(service_pattern, replacement, content, flags=re.MULTILINE | re.DOTALL)
+        # 检查是否进入 environment 块
+        if current_service and re.match(r'^\s{8}environment:\s*$', line):
+            in_environment_block = True
+            result_lines.append(line)
+            i += 1
+            continue
 
-        print(f"  ✓ 已为服务 {service_name} 注入 {len(shared_vars)} 个共享环境变量")
+        # 如果在 environment 块中，检查是否退出
+        if in_environment_block:
+            # 检查缩进级别，如果小于等于8个空格，说明退出了 environment 块
+            indent_match = re.match(r'^(\s*)', line)
+            if indent_match:
+                indent_len = len(indent_match.group(1))
+                if indent_len <= 8 and line.strip():  # 非空行且缩进<=8
+                    # 退出 environment 块，在此之前追加我们的变量
+                    if current_service in service_env_mapping and current_service not in service_processed:
+                        service_env_vars = {}
+                        for module in service_env_mapping[current_service]:
+                            if module in env_vars_by_module:
+                                service_env_vars.update(env_vars_by_module[module])
 
-    return content
+                        if service_env_vars:
+                            for key, value in sorted(service_env_vars.items()):
+                                if ' ' in str(value) or ':' in str(value):
+                                    result_lines.append(f'            {key}: "{value}"')
+                                else:
+                                    result_lines.append(f'            {key}: {value}')
+                            service_processed[current_service] = True
+                            print(f"  ✓ 已为服务 {current_service} 在现有 environment 块中追加 {len(service_env_vars)} 个环境变量")
+
+                    in_environment_block = False
+                    # 继续处理当前行（不要 continue）
+
+        # 检查是否是 restart 行（用于没有 environment 块的服务）
+        if current_service and re.match(r'^\s{8}restart:\s+\S+', line) and not service_has_env.get(current_service, False):
+            result_lines.append(line)
+
+            # 如果该服务需要注入环境变量且还没有处理过（且没有原有的 environment 块）
+            if current_service in service_env_mapping and current_service not in service_processed:
+                service_env_vars = {}
+                for module in service_env_mapping[current_service]:
+                    if module in env_vars_by_module:
+                        service_env_vars.update(env_vars_by_module[module])
+
+                if service_env_vars:
+                    result_lines.append('        environment:')
+                    for key, value in sorted(service_env_vars.items()):
+                        if ' ' in str(value) or ':' in str(value):
+                            result_lines.append(f'            {key}: "{value}"')
+                        else:
+                            result_lines.append(f'            {key}: {value}')
+                    service_processed[current_service] = True
+                    print(f"  ✓ 已为服务 {current_service} 创建 environment 块并注入 {len(service_env_vars)} 个环境变量")
+
+            i += 1
+            continue
+
+        result_lines.append(line)
+        i += 1
+
+    return '\n'.join(result_lines)
 
 
 def generate_docker_compose(env_mode):
@@ -193,8 +266,13 @@ def generate_docker_compose(env_mode):
     project_root = script_dir.parent
     os.chdir(project_root)
 
-    # 加载所有环境变量（包括共享变量）
-    env_vars, shared_vars = load_all_env_vars(env_mode)
+    # 加载所有环境变量（按模块分组）
+    env_vars_by_module = load_all_env_vars(env_mode)
+
+    # 合并所有环境变量用于替换占位符
+    all_env_vars = {}
+    for module_vars in env_vars_by_module.values():
+        all_env_vars.update(module_vars)
 
     # 确定源 docker-compose 文件
     source_compose_file = f'docker-compose.{env_mode}.yml'
@@ -208,19 +286,17 @@ def generate_docker_compose(env_mode):
     with open(source_compose_file, 'r', encoding='utf-8') as f:
         compose_content = f.read()
 
-    # 替换所有环境变量
-    print("正在替换环境变量...")
-    compose_content = replace_env_vars(compose_content, env_vars)
+    # 替换所有环境变量占位符
+    print("正在替换环境变量占位符...")
+    compose_content = replace_env_vars(compose_content, all_env_vars)
 
     # 移除 env_file 配置项
     print("正在移除 env_file 引用...")
     compose_content = remove_env_file_references(compose_content)
 
-    # 为应用服务注入共享环境变量
-    print("正在为服务注入共享环境变量...")
-    # 只为应用层服务注入共享变量（基础设施服务postgres/redis/rabbitmq已经有自己的environment配置）
-    services_to_inject = ['backend', 'frontend', 'ai-processor']
-    compose_content = inject_shared_env_vars(compose_content, shared_vars, services_to_inject)
+    # 为服务注入环境变量
+    print("正在为服务注入环境变量...")
+    compose_content = inject_environment_variables(compose_content, env_vars_by_module)
 
     # 在文件开头添加说明注释
     header_comment = f"""# ==================== 自动生成的 Docker Compose 文件 ====================

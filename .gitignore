@@ -59,3 +59,5 @@ logs/
 
 # ==================== 子模块会有自己的 .gitignore ====================
 # backend/, frontend/, ai-processor/ 的忽略规则在各自目录中定义
+
+docker-compose.yml

@@ -1,0 +1,151 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>MainWindow</class>
+ <widget class="QMainWindow" name="MainWindow">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>1280</width>
+    <height>800</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>VAR熔池分析系统</string>
+  </property>
+  <widget class="QWidget" name="centralwidget"/>
+  <widget class="QMenuBar" name="menubar">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>0</y>
+     <width>1280</width>
+     <height>22</height>
+    </rect>
+   </property>
+   <widget class="QMenu" name="menu_File">
+    <property name="title">
+     <string>文件(&amp;F)</string>
+    </property>
+    <addaction name="actionOpenDataDir"/>
+    <addaction name="separator"/>
+    <addaction name="actionQuit"/>
+   </widget>
+   <widget class="QMenu" name="menu_Service">
+    <property name="title">
+     <string>服务(&amp;S)</string>
+    </property>
+    <addaction name="actionRestartServices"/>
+   </widget>
+   <widget class="QMenu" name="menu_Help">
+    <property name="title">
+     <string>帮助(&amp;H)</string>
+    </property>
+    <addaction name="actionAbout"/>
+   </widget>
+   <addaction name="menu_File"/>
+   <addaction name="menu_Service"/>
+   <addaction name="menu_Help"/>
+  </widget>
+  <widget class="QStatusBar" name="statusbar"/>
+  <action name="actionQuit">
+   <property name="text">
+    <string>退出(&amp;Q)</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+Q</string>
+   </property>
+  </action>
+  <action name="actionAbout">
+   <property name="text">
+    <string>关于(&amp;A)</string>
+   </property>
+  </action>
+  <action name="actionRestartServices">
+   <property name="text">
+    <string>重启服务(&amp;R)</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+R</string>
+   </property>
+  </action>
+  <action name="actionOpenDataDir">
+   <property name="text">
+    <string>打开数据目录(&amp;D)</string>
+   </property>
+  </action>
+ </widget>
+ <resources/>
+ <connections>
+  <connection>
+   <sender>actionQuit</sender>
+   <signal>triggered()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>quitApplication()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>639</x>
+     <y>399</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>actionAbout</sender>
+   <signal>triggered()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>showAboutDialog()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>639</x>
+     <y>399</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>actionRestartServices</sender>
+   <signal>triggered()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>restartServices()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>639</x>
+     <y>399</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>actionOpenDataDir</sender>
+   <signal>triggered()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>openDataDirectory()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>639</x>
+     <y>399</y>
+    </hint>
+   </hints>
+  </connection>
+ </connections>
+ <slots>
+  <slot>quitApplication()</slot>
+  <slot>showAboutDialog()</slot>
+  <slot>restartServices()</slot>
+  <slot>openDataDirectory()</slot>
+ </slots>
+</ui>

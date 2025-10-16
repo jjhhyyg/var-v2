@@ -136,7 +136,10 @@ services:
     backend:
         build:
             context: ./backend
-            dockerfile: Dockerfile
+            # 条件构建：通过环境变量选择Dockerfile
+            # 默认使用 Dockerfile（简化版，需要本地先编译jar包）
+            # 设置 BACKEND_DOCKERFILE=Dockerfile.build 使用多阶段构建（在Docker内编译）
+            dockerfile: ${BACKEND_DOCKERFILE:-Dockerfile}
         image: var-backend:latest
         container_name: var-backend-prod
         restart: always
@@ -145,8 +148,8 @@ services:
         ports:
             - "8080:8080"
         volumes:
-            # 共享存储卷,用于存储上传的视频和处理结果
-            - ./storage:/app/storage
+            # 共享存储卷,用于存储上传的视频和处理结果（使用 named volume 自动管理权限）
+            - var-system-storage:/app/storage
         depends_on:
             postgres:
                 condition: service_healthy
@@ -190,8 +193,8 @@ services:
         ports:
             - "5000:5000"
         volumes:
-            # 共享存储卷,用于读取视频和写入处理结果
-            - ./storage:/app/storage
+            # 共享存储卷,用于读取视频和写入处理结果（使用 named volume 自动管理权限）
+            - var-system-storage:/app/storage
             # 临时目录（内存文件系统，提高安全性）
             - type: tmpfs
               target: /tmp
@@ -315,3 +318,6 @@ networks:
     data-network:
         name: var-data-network-prod
         driver: bridge
+
+volumes:
+    var-system-storage:

@@ -21,10 +21,15 @@ storage/videos/
 storage/result_videos/
 storage/preprocessed_videos/
 storage/temp/
+storage/tracking_results/
+
+# Docker 中间件数据目录（开发环境）
+.docker-data/
+
+# 旧的中间件数据目录（已迁移到 .docker-data）
 storage/postgres-data/
 storage/redis-data/
 storage/rabbitmq-data/
-storage/tracking_results/
 
 # 操作系统文件
 .DS_Store

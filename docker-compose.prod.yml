@@ -1,6 +1,19 @@
-# Docker Compose配置 - 生产环境
+# ========================================
+# Docker Compose配置 - 生产环境（GPU版本）
+# ========================================
 # 用于生产环境部署，包含所有服务的容器化配置
 # 包括：PostgreSQL, Redis, RabbitMQ, Backend, Frontend, AI-Processor
+#
+# 环境变量配置说明：
+# - 根目录 .env: 包含shared配置，供docker-compose使用（postgres/redis/rabbitmq）
+# - backend/.env: 包含backend特定配置 + shared配置（通过use-env.sh生成）
+# - ai-processor/.env: 包含ai-processor特定配置 + shared配置（通过use-env.sh生成）
+# - frontend/.env: 包含frontend特定配置 + shared配置（通过use-env.sh生成）
+#
+# 网络架构：
+# - frontend-network: 前端 <-> 后端通信
+# - backend-network: 后端 <-> AI处理模块 <-> 数据层通信
+# - data-network: 数据层服务（postgres/redis/rabbitmq）内部通信
 
 services:
     # PostgreSQL数据库
@@ -27,7 +40,21 @@ services:
             timeout: 5s
             retries: 5
         networks:
-            - var-network
+            - data-network
+            - backend-network
+        deploy:
+            resources:
+                limits:
+                    cpus: '2'
+                    memory: 2G
+                reservations:
+                    cpus: '0.5'
+                    memory: 512M
+        logging:
+            driver: "json-file"
+            options:
+                max-size: "10m"
+                max-file: "3"
 
     # Redis缓存
     redis:
@@ -42,12 +69,26 @@ services:
         volumes:
             - ./storage/redis-data:/data
         healthcheck:
-            test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+            test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "ping"]
             interval: 10s
             timeout: 3s
             retries: 5
         networks:
-            - var-network
+            - data-network
+            - backend-network
+        deploy:
+            resources:
+                limits:
+                    cpus: '1'
+                    memory: 1G
+                reservations:
+                    cpus: '0.25'
+                    memory: 256M
+        logging:
+            driver: "json-file"
+            options:
+                max-size: "10m"
+                max-file: "3"
 
     # RabbitMQ消息队列
     rabbitmq:
@@ -62,7 +103,8 @@ services:
             RABBITMQ_DEFAULT_VHOST: ${RABBITMQ_VHOST}
         ports:
             - "${RABBITMQ_PORT}:5672"
-            - "15672:15672"
+            # 注意：生产环境建议移除管理端口或使用反向代理+认证保护
+            # - "15672:15672"
         volumes:
             - ./storage/rabbitmq-data:/var/lib/rabbitmq
         healthcheck:
@@ -71,7 +113,21 @@ services:
             timeout: 5s
             retries: 5
         networks:
-            - var-network
+            - data-network
+            - backend-network
+        deploy:
+            resources:
+                limits:
+                    cpus: '1'
+                    memory: 1G
+                reservations:
+                    cpus: '0.25'
+                    memory: 256M
+        logging:
+            driver: "json-file"
+            options:
+                max-size: "10m"
+                max-file: "3"
 
     # 后端服务
     backend:
@@ -82,7 +138,7 @@ services:
         container_name: var-backend-prod
         restart: always
         env_file:
-            - ./backend/.env # backend模块的环境变量文件
+            - ./backend/.env # backend模块的环境变量文件（包含shared配置）
         ports:
             - "8080:8080"
         volumes:
@@ -102,18 +158,32 @@ services:
             start_period: 60s
             retries: 3
         networks:
-            - var-network
+            - frontend-network
+            - backend-network
+        deploy:
+            resources:
+                limits:
+                    cpus: '4'
+                    memory: 4G
+                reservations:
+                    cpus: '1'
+                    memory: 1G
+        logging:
+            driver: "json-file"
+            options:
+                max-size: "10m"
+                max-file: "3"
 
-    # AI处理模块
+    # AI处理模块（GPU版本）
     ai-processor:
         build:
             context: ./ai-processor
-            dockerfile: Dockerfile
+            dockerfile: Dockerfile  # GPU版本Dockerfile
         image: var-ai-processor:latest
         container_name: var-ai-processor-prod
         restart: always
         env_file:
-            - ./ai-processor/.env # ai-processor模块的环境变量文件
+            - ./ai-processor/.env # ai-processor模块的环境变量文件（包含shared配置）
         ports:
             - "5000:5000"
         volumes:
@@ -140,15 +210,13 @@ services:
             start_period: 90s
             retries: 3
         networks:
-            - var-network
+            - backend-network
         # ========================================
         # 容器安全加固配置
         # ========================================
         security_opt:
             # 禁止新权限（防止提权攻击）
             - no-new-privileges:true
-            # 使用 seccomp 安全配置（限制系统调用）
-            - seccomp:unconfined # 生产环境建议使用自定义 seccomp 配置文件
         cap_drop:
             # 移除所有 Linux capabilities（最小权限原则）
             - ALL
@@ -161,15 +229,25 @@ services:
         # 只读根文件系统（提高安全性）- 注意：需要确保所有写入都在 volumes 或 tmpfs 中
         # read_only: true  # 如果启用，需要添加更多 tmpfs 挂载点
         # ========================================
-        # 可选：如果有GPU，取消注释以下配置
+        # GPU和资源配置
         # ========================================
         deploy:
             resources:
+                limits:
+                    cpus: '8'
+                    memory: 16G
                 reservations:
+                    cpus: '2'
+                    memory: 4G
                     devices:
                         - driver: nvidia
                           count: 1
                           capabilities: [gpu]
+        logging:
+            driver: "json-file"
+            options:
+                max-size: "10m"
+                max-file: "3"
 
     # 前端服务
     frontend:
@@ -201,10 +279,40 @@ services:
             start_period: 15s
             retries: 3
         networks:
-            - var-network
+            - frontend-network
+        deploy:
+            resources:
+                limits:
+                    cpus: '1'
+                    memory: 512M
+                reservations:
+                    cpus: '0.25'
+                    memory: 128M
+        logging:
+            driver: "json-file"
+            options:
+                max-size: "10m"
+                max-file: "3"
 
-# 网络配置
+# ========================================
+# 网络配置 - 多层网络隔离
+# ========================================
+# 网络架构说明：
+# - frontend-network: 前端容器与后端容器通信
+# - backend-network: 后端容器、AI处理模块与数据层服务通信
+# - data-network: 数据层服务（postgres/redis/rabbitmq）内部通信
+#
+# 优势：
+# 1. 前端无法直接访问数据库，提高安全性
+# 2. 各层职责分明，网络流量隔离
+# 3. 减少攻击面，即使前端被攻破也无法直接访问数据层
 networks:
-    var-network:
-        name: var-network-prod
+    frontend-network:
+        name: var-frontend-network-prod
+        driver: bridge
+    backend-network:
+        name: var-backend-network-prod
+        driver: bridge
+    data-network:
+        name: var-data-network-prod
         driver: bridge
